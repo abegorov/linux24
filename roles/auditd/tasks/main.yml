@@ -1,0 +1,16 @@
+---
+- name: Install auditd
+  ansible.builtin.apt:
+    name: auditd
+    update_cache: true
+    state: present
+
+- name: Update nginx auditd rules
+  ansible.builtin.template:
+    src: '{{ item }}.rules'
+    dest: /etc/audit/rules.d/{{ item }}.rules
+    owner: root
+    group: root
+    mode: '0640'
+  loop: '{{ auditd_rules }}'
+  notify: Reload auditd rules

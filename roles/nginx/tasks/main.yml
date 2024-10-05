@@ -1,0 +1,23 @@
+---
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    update_cache: true
+    state: present
+
+- name: Configure nginx
+  ansible.builtin.template:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: nginx -t -c %s
+  notify: Reload nginx.service
+
+- name: Ensure nginx.service enabled and started
+  ansible.builtin.systemd_service:
+    name: nginx.service
+    enabled: true
+    state: started
+  ignore_errors: '{{ ansible_check_mode }}'

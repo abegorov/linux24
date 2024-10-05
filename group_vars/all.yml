@@ -1,0 +1,4 @@
+---
+rsyslog_server: '{{ hostvars["log"].ip }}'
+rsyslog_templates: ['client', 'audit']
+auditd_rules: []

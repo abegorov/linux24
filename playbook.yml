@@ -1,0 +1,15 @@
+---
+- name: Common provision
+  hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - rsyslog
+    - auditd
+
+- name: Web provision
+  hosts: web
+  become: true
+  gather_facts: false
+  roles:
+    - nginx

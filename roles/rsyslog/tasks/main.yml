@@ -1,0 +1,23 @@
+---
+- name: Install rsyslog
+  ansible.builtin.apt:
+    name: rsyslog
+    update_cache: true
+    state: present
+
+- name: Install rsyslog-elasticsearch
+  ansible.builtin.apt:
+    name: rsyslog-elasticsearch
+    state: present
+  when: '"server" in rsyslog_templates'
+  notify: Restart rsyslog.service
+
+- name: Update rsyslog configuration
+  ansible.builtin.template:
+    src: rsyslog.conf
+    dest: /etc/rsyslog.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/rsyslogd -N1 -f %s
+  notify: Restart rsyslog.service
