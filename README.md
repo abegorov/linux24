@@ -16,9 +16,12 @@
 
 Задание сделано на **debian/bookworm64** версии **v12.20240905.1**. Для автоматизации процесса написаны следующие роли **Ansible**, переменные для которых хранятся в [group_vars/all.yml](group_vars/all.yml), [hostvars/web.yml](host_vars/web.yml), [hostvars/log.yml](host_vars/log.yml), [hostvars/elk.yml](host_vars/elk.yml):
 
-- **rsyslog** - настраивает **rsyslog**. На узлах **web** и **elk** стандартный конфиг дополняется отправкой лога аудита ([audit.conf](roles/rsyslog/templates/audit.conf)) и отправкой логов на централизованный сервер ([client.conf](roles/rsyslog/templates/client.conf)). На узле **log** лог добавляется настройками приёма логов по **TCP** и **UDP** в файле [server.conf](roles/rsyslog/templates/server.conf).
+- **elastic_repo** - добавляет в систему зеркало репозитория **elastic** на [mirror.yandex.ru](https://mirror.yandex.ru/mirrors/elastic/8/).
+- **elasticsearch** - устанавливает **elasticsearch**, пароль пользователя **elastic** сохраняется в `passwords/elastic.txt`, а токен для **kibana** в `passwords/kibana_token.txt`.
+- **kibana** - устанавливает и настраивает **kibana** согласно конфигурации в файле [kibana.conf](roles/kibana/templates/kibana.conf).
+- **rsyslog** - настраивает **rsyslog**. На узлах **web** и **elk** стандартный конфиг дополняется отправкой лога аудита ([audit.conf](roles/rsyslog/templates/audit.conf)) и отправкой логов на централизованный сервер ([client.conf](roles/rsyslog/templates/client.conf)). На узле **log** лог добавляется настройками приёма логов по **TCP** и **UDP** и логирвания в **elasticsearch** в файле [server.conf](roles/rsyslog/templates/server.conf).
 - **auditd** - устанавливает **auditd**. На узле **nginx** также настраивает мониторинг изменний файлов в `/etc/nginx` с помощью правил [nginx.rules](roles/auditd/templates/nginx.rules).
-- **nginx** - устанавливает **nginx** и настраивает его для отправки логов на серер **log** через его конфигурацию в файл [nginx.conf](roles/nginx/templates/nginx.conf)/
+- **nginx** - устанавливает **nginx** и настраивает его для отправки логов на серер **log** через его конфигурацию в файл [nginx.conf](roles/nginx/templates/nginx.conf).
 
 ## Запуск
 
@@ -63,6 +66,7 @@ rm vagrant.box
 Выполним:
 
 ```shell
+curl -s -o /dev/null http://localhost:8080
 curl -s -o /dev/null http://192.168.56.10
 vagrant ssh log -c 'sudo ls -l /var/log/rsyslog/web':
 ```
@@ -97,3 +101,15 @@ total 228
 2024-10-05T20:19:05+00:00 web audit type=PATH msg=audit(1728159545.650:218): item=3 name="/etc/nginx/nginx.conf" inode=3408936 dev=08:01 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=DELETE cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0 cap_frootid=0#035OUID="root" OGID="root"
 2024-10-05T20:19:05+00:00 web audit type=PATH msg=audit(1728159545.650:218): item=4 name="/etc/nginx/nginx.conf" inode=6291472 dev=08:01 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=CREATE cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0 cap_frootid=0#035OUID="root" OGID="root"
 ```
+
+Для проверки лоигрования в **elasticsearch** зайдём в **Kibana** по адресу [192.168.56.20:5601](http://192.168.56.20:5601) или [localhost:5601](http://localhost:5601). Для входа используем логин **elastic** и пароль из файла `passwords/elastic.txt`.
+
+Выбираем **Explore on my own -> Analytics -> Create data view** и создаём **data view** для логов **nginx**:
+
+- **Name:** log-nginx-\*
+- **Index pattern:** log-nginx-\*
+- **Timestamp field:** @timetamp
+
+После этого выбираем **Discover**. Как видно логи **nginx** видно в **Kibana**:
+
+![Kibana](images/kibana.png)

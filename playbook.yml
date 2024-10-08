@@ -1,4 +1,13 @@
 ---
+- name: ELK provision
+  hosts: elk
+  become: true
+  gather_facts: false
+  roles:
+    - elastic_repo
+    - elasticsearch
+    - kibana
+
 - name: Common provision
   hosts: all
   become: true

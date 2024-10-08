@@ -1,0 +1,24 @@
+---
+- name: Install kibana
+  ansible.builtin.apt:
+    name: kibana
+    update_cache: true
+    state: present
+
+- name: Configure kibana
+  ansible.builtin.template:
+    src: kibana.conf
+    dest: /etc/kibana/kibana.yml
+    owner: root
+    group: kibana
+    mode: '0660'
+  no_log: true
+  notify: Restart kibana service
+
+- name: Enable and start kibana service
+  ansible.builtin.systemd_service:
+    name: kibana.service
+    enabled: true
+    daemon_reload: true
+    state: started
+  ignore_errors: '{{ ansible_check_mode }}'

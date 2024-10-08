@@ -1,0 +1,62 @@
+---
+- name: Install elasticsearch
+  ansible.builtin.apt:
+    name: elasticsearch
+    update_cache: true
+    state: present
+  register: install_elasticsearch_result
+
+- name: Enable and start elasticsearch service
+  ansible.builtin.systemd_service:
+    name: elasticsearch.service
+    enabled: true
+    daemon_reload: true
+    state: started
+  ignore_errors: '{{ ansible_check_mode }}'
+
+- name: Change elastic password
+  ansible.builtin.command: >-
+    /usr/share/elasticsearch/bin/elasticsearch-reset-password
+    --batch
+    --username elastic
+  changed_when: true
+  no_log: true
+  when: install_elasticsearch_result.changed  # noqa: no-handler
+  register: change_elastic_password_result
+
+- name: Save elastic password
+  delegate_to: localhost
+  become: false
+  ansible.builtin.copy:
+    content: '{{ change_elastic_password_result.stdout.split(" ") | last }}'
+    dest: '{{ elasticsearch_password_file }}'
+    mode: '0600'
+  no_log: true
+  when: change_elastic_password_result.changed  # noqa: no-handler
+
+- name: Create kibana token
+  ansible.builtin.command: >-
+    /usr/share/elasticsearch/bin/elasticsearch-service-tokens
+    create elastic/kibana kibana
+  changed_when: true
+  no_log: true
+  when: install_elasticsearch_result.changed  # noqa: no-handler
+  register: create_kibana_token_result
+
+- name: Save kibana token
+  delegate_to: localhost
+  become: false
+  ansible.builtin.copy:
+    content: '{{ create_kibana_token_result.stdout.split(" ") | last }}'
+    dest: '{{ elasticsearch_kibana_token_file }}'
+    mode: '0600'
+  no_log: true
+  when: create_kibana_token_result.changed  # noqa: no-handler
+
+- name: Fix service tokens permissions
+  ansible.builtin.file:
+    path: /etc/elasticsearch/service_tokens
+    state: file
+    owner: root
+    group: elasticsearch
+    mode: '0640'

@@ -5,13 +5,15 @@ BOX = 'debian/bookworm64/v12.20240905.1'
 DOMAIN = 'internal'
 MACHINES = {
   :'web' => { :cpus => 1, :memory => 1024, :networks => [
-    [:private_network, {:ip => '192.168.56.10'}]
+    [:private_network, {:ip => '192.168.56.10'}],
+    [:forwarded_port, {:guest => 80, :host_ip => '127.0.0.1', :host => 8080}]
   ] },
   :'log' => { :cpus => 1, :memory => 1024, :networks => [
     [:private_network, {:ip => '192.168.56.15'}]
   ] },
-  :'elk' => { :cpus => 2, :memory => 2048, :networks => [
-    [:private_network, {:ip => '192.168.56.20'}]
+  :'elk' => { :cpus => 2, :memory => 4096, :networks => [
+    [:private_network, {:ip => '192.168.56.20'}],
+    [:forwarded_port, {:guest => 5601, :host_ip => '127.0.0.1', :host => 5601}]
   ] }
 }
 

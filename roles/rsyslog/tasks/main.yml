@@ -20,4 +20,5 @@
     group: root
     mode: '0644'
     validate: /usr/sbin/rsyslogd -N1 -f %s
+  no_log: true
   notify: Restart rsyslog.service

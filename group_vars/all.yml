@@ -2,3 +2,12 @@
 rsyslog_server: '{{ hostvars["log"].ip }}'
 rsyslog_templates: ['client', 'audit']
 auditd_rules: []
+
+elasticsearch_server: '{{ hostvars["elk"].ip }}'
+elasticsearch_user: elastic
+elasticsearch_password_file: passwords/elastic.txt
+elasticsearch_password: '{{ lookup("ansible.builtin.file",
+  elasticsearch_password_file) }}'
+elasticsearch_kibana_token_file: passwords/kibana_token.txt
+kibana_elasticsearch_token: '{{ lookup("ansible.builtin.file",
+  elasticsearch_kibana_token_file) }}'
